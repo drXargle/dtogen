@@ -1,0 +1,81 @@
+package {{mapperPackageName}};
+
+{{#imports}}
+import {{importName}};
+{{/imports}}
+import {{dtoPackageName}}.{{dtoName}};
+import java.util.stream.Collectors;
+import java.util.Arrays;
+
+public class {{entityName}}Mapper {
+
+  protected {{entityName}}Mapper() {}
+
+  public static Set<{{{entityName}}}> newEntity(Set<{{{dtoName}}}> dtos) {
+    return dtos.stream().map({{entityName}}Mapper::newEntity).collect(Collectors.toSet());
+  }
+
+  public static List<{{{entityName}}}> newEntity(List<{{{dtoName}}}> dtos) {
+    return dtos.stream().map({{entityName}}Mapper::newEntity).collect(Collectors.toList());
+  }
+
+  public static {{{entityName}}}[] newEntity({{{dtoName}}}[] dtos) {
+    return Arrays.stream(dtos).map({{entityName}}Mapper::newEntity).toArray({{{entityName}}}[]::new);
+  }
+
+  public static Set<{{{dtoName}}}> dto(Set<{{{entityName}}}> entities) {
+    return entities.stream().map({{entityName}}Mapper::dto).collect(Collectors.toSet());
+  }
+
+  public static List<{{{dtoName}}}> dto(List<{{{entityName}}}> entities) {
+    return entities.stream().map({{entityName}}Mapper::dto).collect(Collectors.toList());
+  }
+
+  public static {{{dtoName}}}[] dto({{{entityName}}}[] entities) {
+    return Arrays.stream(entities).map({{entityName}}Mapper::dto).toArray({{{dtoName}}}[]::new);
+  }
+
+
+  public static {{entityName}} newEntity({{dtoName}} dto) {
+    {{entityName}} val = new {{entityName}}();
+
+{{#properties}}
+  {{#mappingEntity}}
+    val.set{{propName}}({{mappingEntity.entityName}}Mapper.newEntity( dto.get{{propName}}()) );
+  {{/mappingEntity}}
+  {{^mappingEntity}}
+    val.set{{propName}}(dto.get{{propName}}());
+  {{/mappingEntity}}
+{{/properties}}
+
+    return val;
+  }
+
+  public static {{entityName}} updateEntity({{entityName}} val, {{dtoName}} dto) {
+{{#properties}}
+  {{#mappingEntity}}
+    val.set{{propName}}({{mappingEntity.entityName}}Mapper.newEntity( dto.get{{propName}}() ));
+  {{/mappingEntity}}
+  {{^mappingEntity}}
+    val.set{{propName}}(dto.get{{propName}}());
+  {{/mappingEntity}}
+{{/properties}}
+
+    return val;
+  }
+
+  public static {{dtoName}} dto({{entityName}} val) {
+    {{dtoName}} dto = new {{dtoName}}.Builder()
+{{#properties}}
+  {{#mappingEntity}}
+      .{{propField}}({{mappingEntity.entityName}}Mapper.dto( val.get{{propName}}()) )
+  {{/mappingEntity}}
+  {{^mappingEntity}}
+      .{{propField}}(val.get{{propName}}())
+  {{/mappingEntity}}
+{{/properties}}
+      .build();
+
+    return dto;
+  }
+}

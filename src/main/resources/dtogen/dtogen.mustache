@@ -1,0 +1,44 @@
+package {{dtoPackageName}};
+
+{{#imports}}
+{{#both}}
+import {{importName}};
+{{/both}}
+{{/imports}}
+
+public class {{dtoName}} {{#extend}}extends {{extend}}{{/extend}} {
+
+ protected {{dtoName}}() {}
+
+{{#properties}}
+  private {{{propType}}} {{propField}};
+{{/properties}}
+
+{{#properties}}
+  public {{{propType}}} get{{propName}}() {
+    return this.{{propField}};
+  }
+
+  public void set{{propName}}({{{propType}}} val) {
+    this.{{propField}} = val;
+  }
+{{/properties}}
+
+  public static class Builder {
+    private final {{dtoName}} clazz = new {{dtoName}}();
+
+    public Builder() {}
+
+    public {{dtoName}} build() {
+      return clazz;
+    }
+
+{{#properties}}
+    public Builder {{propField}}({{{propType}}} val) {
+      clazz.set{{propName}}(val);
+      return this;
+    }
+{{/properties}}
+  }
+}
+
