@@ -20,8 +20,11 @@ import javax.persistence.Entity;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -42,6 +45,7 @@ import java.util.Set;
  */
 @Mojo(name = "generate",
 	defaultPhase = LifecyclePhase.PROCESS_CLASSES,
+	configurator = "include-project-dependencies",
 	requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class DtoGeneneratorMojo extends AbstractMojo {
 	List<DtoHolderEnhancer> enhancers = new ArrayList<>();
@@ -58,6 +62,9 @@ public class DtoGeneneratorMojo extends AbstractMojo {
 	@Parameter(defaultValue = "${project.build.directory}/generated-sources/dto/src/test/java")
 	File javaOutFolder;
 
+	@Parameter(defaultValue = "${project.directory}")
+	File projectDir;
+
 	@Parameter
 	String dtoTemplate = "/dtogen/dtogen.mustache";
 
@@ -69,7 +76,7 @@ public class DtoGeneneratorMojo extends AbstractMojo {
 		loadEnhancers();
 
 		try {
-			sourceModules.forEach(module -> {
+			for(SourceModule module : sourceModules) {
 				Set<Class<?>> classesToExport = new HashSet<>();
 
 				if (module.getSourcePackage() != null) {
@@ -82,7 +89,7 @@ public class DtoGeneneratorMojo extends AbstractMojo {
 				} else {
 					getLog().error(String.format("found no classes or interfaces in package/path `%s`", module.getSourcePackage()));
 				}
-			});
+			}
 
 			if (project != null) {
 				project.addCompileSourceRoot(javaOutFolder.getAbsolutePath());
@@ -100,7 +107,7 @@ public class DtoGeneneratorMojo extends AbstractMojo {
 		}
 	}
 
-	private void exportModule(SourceModule module, Set<Class<?>> classesToExport) {
+	private void exportModule(SourceModule module, Set<Class<?>> classesToExport) throws MojoExecutionException {
 		Map<Class<?>, DtoHolder> holders = new HashMap<>();
 
  		classesToExport.forEach(clazz -> {
@@ -131,7 +138,7 @@ public class DtoGeneneratorMojo extends AbstractMojo {
 		if (module.isGenerateDto()) {
 			String finalDtoTemplate = module.getDtoTemplate() == null ? dtoTemplate : module.getDtoTemplate();
 
-			Template dtoTemplate = Mustache.compiler().compile(new InputStreamReader(getClass().getResourceAsStream(finalDtoTemplate)));
+			Template dtoTemplate = Mustache.compiler().compile(new InputStreamReader(getTemplate(finalDtoTemplate)));
 
 			getLog().info(String.format("generating %d dtos from %s.", holders.size(), module.getSourcePackage()));
 			for (Class<?> clazz : holders.keySet()) {
@@ -151,7 +158,7 @@ public class DtoGeneneratorMojo extends AbstractMojo {
 
 		if (module.isGenerateMapper()) {
 			String finalMapperTemplate = module.getDtoTemplate() == null ? mapperTemplate : module.getMapperTemplate();
-			Template mapperTemplate = Mustache.compiler().compile(new InputStreamReader(getClass().getResourceAsStream(finalMapperTemplate)));
+			Template mapperTemplate = Mustache.compiler().compile(new InputStreamReader(getTemplate(finalMapperTemplate)));
 
 			getLog().info(String.format("generating %d mappers from %s.", holders.size(), module.getSourcePackage()));
 
@@ -169,6 +176,44 @@ public class DtoGeneneratorMojo extends AbstractMojo {
 				}
 			}
 		}
+	}
+
+	private InputStream getTemplate(String name) throws MojoExecutionException {
+		InputStream stream = getClass().getResourceAsStream(name);
+
+		if (stream == null) {
+			if (!name.startsWith(File.separator)) {
+				name = File.separator + name;
+			}
+			// try local project directory src/main/resources
+			File f = new File(projectDir, "src/main/resources" + name);
+			getLog().info("looking in " + f.getAbsolutePath());
+			if (f.exists()) {
+				try {
+					stream = new FileInputStream(f);
+				} catch (FileNotFoundException e) { // hard to see how this can happen
+					throw new MojoExecutionException("Cannot find file", e);
+				}
+			}
+		}
+
+		if (stream == null) {
+			// try local project directory src/test/resources
+			File f = new File(projectDir, "src/test/resources" + name);
+			if (f.exists()) {
+				try {
+					stream = new FileInputStream(f);
+				} catch (FileNotFoundException e) { // hard to see how this can happen
+					throw new MojoExecutionException("Cannot find file", e);
+				}
+			}
+		}
+
+		if (stream == null) {
+			throw new MojoExecutionException("Cannot find resource named " + name);
+		}
+
+		return stream;
 	}
 
 	private File dtoFilename(DtoHolder holder) {
