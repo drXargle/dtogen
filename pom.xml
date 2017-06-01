@@ -10,7 +10,7 @@
 
 	<groupId>com.bluetrainsoftware.dtogen</groupId>
 	<artifactId>dtogen</artifactId>
-	<version>1.1</version>
+	<version>1.2-SNAPSHOT</version>
 	<packaging>maven-plugin</packaging>
 
 	<properties>
@@ -192,8 +192,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-  <scm>
-    <tag>dtogen-1.1</tag>
-  </scm>
 </project>
