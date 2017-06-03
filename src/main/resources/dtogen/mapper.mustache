@@ -12,31 +12,38 @@ public class {{entityName}}Mapper {
   protected {{entityName}}Mapper() {}
 
   public static Set<{{{entityName}}}> newEntity(Set<{{{dtoName}}}> dtos) {
+    if (dtos == null) { return null; }
     return dtos.stream().map({{entityName}}Mapper::newEntity).collect(Collectors.toSet());
   }
 
   public static List<{{{entityName}}}> newEntity(List<{{{dtoName}}}> dtos) {
+    if (dtos == null) { return null; }
     return dtos.stream().map({{entityName}}Mapper::newEntity).collect(Collectors.toList());
   }
 
   public static {{{entityName}}}[] newEntity({{{dtoName}}}[] dtos) {
+    if (dtos == null) { return null; }
     return Arrays.stream(dtos).map({{entityName}}Mapper::newEntity).toArray({{{entityName}}}[]::new);
   }
 
   public static Set<{{{dtoName}}}> dto(Set<{{{entityName}}}> entities) {
+    if (entities == null) { return null; }
     return entities.stream().map({{entityName}}Mapper::dto).collect(Collectors.toSet());
   }
 
   public static List<{{{dtoName}}}> dto(List<{{{entityName}}}> entities) {
+    if (entities == null) { return null; }
     return entities.stream().map({{entityName}}Mapper::dto).collect(Collectors.toList());
   }
 
   public static {{{dtoName}}}[] dto({{{entityName}}}[] entities) {
+    if (entities == null) { return null; }
     return Arrays.stream(entities).map({{entityName}}Mapper::dto).toArray({{{dtoName}}}[]::new);
   }
 
 
   public static {{entityName}} newEntity({{dtoName}} dto) {
+    if (dto == null) { return null; }
     {{entityName}} val = new {{entityName}}();
 
 {{#properties}}
@@ -52,6 +59,7 @@ public class {{entityName}}Mapper {
   }
 
   public static {{entityName}} updateEntity({{entityName}} val, {{dtoName}} dto) {
+    if (dto == null) { return null; }
 {{#properties}}
   {{#mappingEntity}}
     val.set{{propName}}({{mappingEntity.entityName}}Mapper.newEntity( dto.get{{propName}}() ));
@@ -65,6 +73,7 @@ public class {{entityName}}Mapper {
   }
 
   public static {{dtoName}} dto({{entityName}} val) {
+    if (val == null) { return null; }
     {{dtoName}} dto = new {{dtoName}}.Builder()
 {{#properties}}
   {{#mappingEntity}}
